@@ -2,6 +2,7 @@ package com.bukhari.magnetometer;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -18,8 +19,11 @@ import androidx.core.app.ActivityCompat;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
@@ -30,6 +34,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static final String CSV_FILE_NAME = "/magnetometerdata.csv";
     FileWriter writer = null;
     private LocationManager locationManager;
+    DateFormat dateFormat ;
+
 
 
     @Override
@@ -43,18 +49,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         DECIMAL_FORMATTER = new DecimalFormat("#.000", symbols);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        Intent intent = new Intent(this, MagnetometerService.class);
+//        startService(intent);
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
 
 
@@ -104,13 +101,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             float magZ = event.values[2];
             double magnitude = Math.sqrt((magX * magX) + (magY * magY) + (magZ * magZ));
 
-            @SuppressLint("MissingPermission") Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
 //
 
 
 
             // get GPS location
+            long timestamp = System.currentTimeMillis();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+            String dateString = dateFormat.format(new Date());
+            System.out.println(dateString);
+
+
+//            String dateString = dateFormat.format(new Date(timestamp));
+
+
 
 
             // set value on the screen
@@ -119,9 +124,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             String csvRow = DECIMAL_FORMATTER.format(magX) + "," +
                     DECIMAL_FORMATTER.format(magY) + "," +
                     DECIMAL_FORMATTER.format(magZ) + "," +
-                    DECIMAL_FORMATTER.format(magnitude)+ "," +
-                    location.getLatitude() + "," +
-                    location.getLongitude();
+                    (dateString) + "," +
+                    DECIMAL_FORMATTER.format(magnitude);
+//                    location.getLatitude() + "," +
+//                    location.getLongitude();
 
 //            FileWriter writer = null;
             try {
@@ -135,12 +141,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
-                try {
-//                    writer.flush();
-                    writer.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                try {
+////                    writer.flush();
+////                    writer.close();
+////                } catch (IOException e) {
+////                    e.printStackTrace();
+////                }
             }
         }
 
