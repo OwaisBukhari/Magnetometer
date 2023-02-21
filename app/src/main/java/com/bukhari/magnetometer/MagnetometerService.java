@@ -1,6 +1,9 @@
 package com.bukhari.magnetometer;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -11,6 +14,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
@@ -23,13 +27,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 public class MagnetometerService extends Service implements SensorEventListener {
     private static final String TAG = "MagnetometerService";
     private static final long INTERVAL = 1000; // update interval in milliseconds
     private static final String CSV_FILE_NAME = "/magnetometerdata.csv";
-    private static final String CSV_HEADER = "Latitude,Longitude,MagX,MagY,MagZ";
+    private static final String CSV_HEADER = "Latitude,Longitude,MagX,MagY,MagZ,TimeStamp,NetField";
+    private static final String CHANNEL_ID = "ForegroundServiceforMagnetometer";
+
 
     private SensorManager sensorManager;
     private Sensor sensor;
@@ -45,21 +53,71 @@ public class MagnetometerService extends Service implements SensorEventListener 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         sensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        createNotificationChannel();
+        Intent stopServiceIntent = new Intent(this, MagnetometerService.class);
+        stopServiceIntent.setAction("STOP_SERVICE");
+        PendingIntent stopServicePendingIntent = PendingIntent.getService(
+                this,
+                0,
+                stopServiceIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+
+
+
+
+        Notification notification = new NotificationCompat.Builder(this,TAG)
+                .setContentTitle("Magnetometer Service")
+                .setContentText("Recording Magnetometer Data...Click to stop")
+                .setContentIntent(stopServicePendingIntent)
+                .setSmallIcon(R.drawable.ic_launcher_background)
+
+
+                .build();
 
         // define decimal formatter
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
         symbols.setDecimalSeparator('.');
         decimalFormatter = new DecimalFormat("#.000", symbols);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+
+        startForeground(1,notification);
+
+
     }
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    TAG,
+                    TAG,
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
+    }
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if(intent.getAction()!=null && intent.getAction().equals("STOP_SERVICE")){
+            stopSelf();
+            return START_NOT_STICKY;
+        }
         // create notification for foreground service
-        Notification notification = new NotificationCompat.Builder(this, "channel_id")
-                .setContentTitle("Magnetometer Service")
-                .setContentText("Recording Magnetometer Data...")
-//                .setSmallIcon(R.drawable.ic_notification)
-                .build();
+
         try {
             writer = new FileWriter(Environment.getExternalStorageDirectory() + CSV_FILE_NAME, true);
         } catch (IOException e) {
@@ -80,7 +138,7 @@ public class MagnetometerService extends Service implements SensorEventListener 
 
 
         // start service in the foreground
-        startForeground(1, notification);
+//        startForeground(1, notification);
 
         // register sensor listener
         sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
@@ -110,7 +168,7 @@ public class MagnetometerService extends Service implements SensorEventListener 
             float magY = event.values[1];
             float magZ = event.values[2];
             double magnitude = Math.sqrt((magX * magX) + (magY * magY) + (magZ * magZ));
-            System.out.println("Bhai yeee chalraha");
+            System.out.println("Bhai yeee chalraha SERVICE walaa");
 
             // get GPS location
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -123,22 +181,32 @@ public class MagnetometerService extends Service implements SensorEventListener 
                 // for ActivityCompat#requestPermissions for more details.
                 return;
             }
-            location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            System.out.println(location.getLatitude()+"sssssssss");
+
 
             // check if location is not null before accessing it
 //            if (location != null) {
                 // set value on the screen
 //                String text = "Latitude: " + location.getLatitude() + ", Longitude: " + location.getLongitude() + ", MagX: " + decimalFormatter.format(magX) + ", MagY: " + decimalFormatter.format(magY) + ", MagZ: " + decimalFormatter.format(magZ) + ", Magnitude: " + decimalFormatter.format(magnitude) + " \u00B5Tesla";
 //                Log.d(TAG, text);
+            long timestamp = System.currentTimeMillis();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+            String dateString = dateFormat.format(new Date());
+            System.out.println(dateString);
 
-                // write values to CSV file
+
+            // write values to CSV file
                 String csvRow =
-//                        location.getLongitude() + "," +
-                        decimalFormatter.format(magX) + "," +
+                                location.getLongitude() + "," +
+                                location.getLatitude() + "," +
+                                decimalFormatter.format(magX) + "," +
                         decimalFormatter.format(magY) + "," +
                         decimalFormatter.format(magZ) + ","+
-                                String.valueOf(System.currentTimeMillis()) + ","+
-            decimalFormatter.format(magnitude);
+//                                String.valueOf(System.currentTimeMillis()) + ","+
+                                        dateString + ","+
+
+                                        decimalFormatter.format(magnitude);
 
 //                try {
 //                writer = new FileWriter(Environment.getExternalStorageDirectory()+CSV_FILE_NAME, true);

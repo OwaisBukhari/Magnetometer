@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView value;
     private SensorManager sensorManager;
     public static DecimalFormat DECIMAL_FORMATTER;
-    private static final String CSV_HEADER = "MagX,MagY,MagZ,MagneticField";
+    private static final String CSV_HEADER = "Latitude,Longitude,MagX,MagY,MagZ,TimeStamp,NetField";
     private static final String CSV_FILE_NAME = "/magnetometerdata.csv";
     FileWriter writer = null;
     private LocationManager locationManager;
@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         Intent intent = new Intent(this, MagnetometerService.class);
-//        startService(intent);
+        startService(intent);
 
 
 
