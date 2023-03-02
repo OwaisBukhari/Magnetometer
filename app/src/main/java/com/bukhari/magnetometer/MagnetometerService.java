@@ -1,5 +1,7 @@
 package com.bukhari.magnetometer;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -25,6 +27,7 @@ import androidx.core.app.NotificationCompat;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -35,7 +38,7 @@ public class MagnetometerService extends Service implements SensorEventListener 
     private static final String TAG = "MagnetometerService";
     private static final long INTERVAL = 1000; // update interval in milliseconds
     private static final String CSV_FILE_NAME = "/magnetometerdata.csv";
-    private static final String CSV_HEADER = "Latitude,Longitude,MagX,MagY,MagZ,TimeStamp,NetField";
+    private static final String CSV_HEADER = "Latitude,Longitude,Altitude,MagX,MagY,MagZ,NetField,TimeStamp";
     private static final String CHANNEL_ID = "ForegroundServiceforMagnetometer";
 
 
@@ -45,6 +48,9 @@ public class MagnetometerService extends Service implements SensorEventListener 
     private Location location;
     private DecimalFormat decimalFormatter;
     FileWriter writer = null;
+    private double longi;
+    private double latit;
+    private double alt;
 
 
     @Override
@@ -52,7 +58,7 @@ public class MagnetometerService extends Service implements SensorEventListener 
         super.onCreate();
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         sensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         createNotificationChannel();
         Intent stopServiceIntent = new Intent(this, MagnetometerService.class);
         stopServiceIntent.setAction("STOP_SERVICE");
@@ -60,8 +66,11 @@ public class MagnetometerService extends Service implements SensorEventListener 
                 this,
                 0,
                 stopServiceIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT
+                PendingIntent.FLAG_IMMUTABLE
         );
+
+
+
 
 
 
@@ -83,6 +92,9 @@ public class MagnetometerService extends Service implements SensorEventListener 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
+//            ActivityCompat.requestPermissionsclass,
+//                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+
             // here to request the missing permissions, and then overriding
             //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
             //                                          int[] grantResults)
@@ -90,7 +102,12 @@ public class MagnetometerService extends Service implements SensorEventListener 
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        if (location == null) {
+          location=locationManager.getLastKnownLocation(LocationManager.FUSED_PROVIDER);
+
+
+        }
 
 
         startForeground(1,notification);
@@ -162,6 +179,8 @@ public class MagnetometerService extends Service implements SensorEventListener 
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        System.out.println(locationManager.getAllProviders());
+
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
             // get values for each axes X,Y,Z
             float magX = event.values[0];
@@ -171,8 +190,12 @@ public class MagnetometerService extends Service implements SensorEventListener 
             System.out.println("Bhai yeee chalraha SERVICE walaa");
 
             // get GPS location
-            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
+
+                System.out.println("KOI PROBLEM HAI");
+//                ActivityCompat.requestPermissions((Activity) getApplicationContext(), new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
+
                 //    ActivityCompat#requestPermissions
                 // here to request the missing permissions, and then overriding
                 //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
@@ -181,13 +204,24 @@ public class MagnetometerService extends Service implements SensorEventListener 
                 // for ActivityCompat#requestPermissions for more details.
                 return;
             }
+
+
             location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            System.out.println(location.getLatitude()+"sssssssss");
+//            if(location==null){
+//                location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//
+//            }
+
+//            if(location == null) {
+//                location = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+//            }
+
+//            System.out.println(location.getLatitude()+"sssssssss");
 
 
             // check if location is not null before accessing it
 //            if (location != null) {
-                // set value on the screen
+            // set value on the screen
 //                String text = "Latitude: " + location.getLatitude() + ", Longitude: " + location.getLongitude() + ", MagX: " + decimalFormatter.format(magX) + ", MagY: " + decimalFormatter.format(magY) + ", MagZ: " + decimalFormatter.format(magZ) + ", Magnitude: " + decimalFormatter.format(magnitude) + " \u00B5Tesla";
 //                Log.d(TAG, text);
             long timestamp = System.currentTimeMillis();
@@ -195,18 +229,34 @@ public class MagnetometerService extends Service implements SensorEventListener 
             String dateString = dateFormat.format(new Date());
             System.out.println(dateString);
 
+            double lon = 0;
+            if (location != null) {
+//                System.out.println("Bhai location nhi null hai");
+                longi = location.getLongitude();
+                 latit = location.getLatitude();
+                 alt = location.getAltitude();
+//                lat.getBytes(StandardCharsets.UTF_8)
+            }
+            else {
+                longi = 0;
+                latit = 0;
+                alt = 0;
+            }
+//                System.out.println("Bhai location null hai");
+
 
             // write values to CSV file
-                String csvRow =
-                                location.getLongitude() + "," +
-                                location.getLatitude() + "," +
-                                decimalFormatter.format(magX) + "," +
-                        decimalFormatter.format(magY) + "," +
-                        decimalFormatter.format(magZ) + ","+
+            String csvRow =
+                    longi + "," +
+                            latit + "," +
+                            alt + "," +
+                            decimalFormatter.format(magX) + "," +
+                            decimalFormatter.format(magY) + "," +
+                            decimalFormatter.format(magZ) + "," +
 //                                String.valueOf(System.currentTimeMillis()) + ","+
-                                        dateString + ","+
+                            decimalFormatter.format(magnitude) + "," +
+                            dateString;
 
-                                        decimalFormatter.format(magnitude);
 
 //                try {
 //                writer = new FileWriter(Environment.getExternalStorageDirectory()+CSV_FILE_NAME, true);
@@ -219,7 +269,7 @@ public class MagnetometerService extends Service implements SensorEventListener 
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
-            System.out.println("Bhai writer chala"+csvRow);
+            System.out.println("Bhai writer chala" + csvRow);
             try {
                 writer.append('\n');
             } catch (IOException e) {
