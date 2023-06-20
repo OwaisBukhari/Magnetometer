@@ -8,12 +8,12 @@
     path="magnetometer.csv"
     />
 
-<!--        <files-path-->
-<!--        name="files"-->
-<!--        path="."/>-->
-<!--    <external-media-path-->
-<!--        name="external_media"-->
-<!--        path="."/>-->
+        <files-path
+        name="files"
+        path="."/>
+    <external-media-path
+        name="external_media"
+        path="."/>
 
 
 <!--&lt;!&ndash;    //android 12 and above&ndash;&gt;-->

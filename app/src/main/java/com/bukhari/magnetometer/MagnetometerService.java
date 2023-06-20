@@ -265,13 +265,18 @@ public class MagnetometerService extends Service implements SensorEventListener 
 //                    writer.append('\n');
 ////                }
             try {
-                writer.append(csvRow);
+                if (writer != null) {
+                    writer.append(csvRow);
+                }
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
             System.out.println("Bhai writer chala" + csvRow);
             try {
+                if (writer != null) {
+
                 writer.append('\n');
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }

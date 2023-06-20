@@ -131,9 +131,10 @@ public class MainActivity extends AppCompatActivity  {
 ////        System.out.println("filePath: " + filePath);
 //
 //        // Get the content:// URI using the Storage Access Framework
-        Uri uri = Uri.parse(filePath);
+//        Uri uri = Uri.parse(filePath);
+
 //        File file = new File(Environment.getExternalStorageDirectory(),fileName);
-//        Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", new File(filePath));
+        Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", new File(filePath));
 //
         // Create an Intent to open the file
         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -187,6 +188,9 @@ public class MainActivity extends AppCompatActivity  {
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Log.i(TAG,"bg_loc_check");
+            ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+
+
             if ((checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
                 // You can use the API that requires the permission.
                 if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
