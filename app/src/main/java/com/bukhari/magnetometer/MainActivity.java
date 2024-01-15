@@ -5,8 +5,10 @@ import static android.content.ContentValues.TAG;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -46,11 +48,13 @@ import java.util.Date;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity  {
+    private static final int INTERVAL = 1 * 60 * 1000; // 5 minutes in milliseconds
+
     private TextView value;
     private SensorManager sensorManager;
     public static DecimalFormat DECIMAL_FORMATTER;
     private static final String CSV_HEADER = "Latitude,Longitude,Altitude,MagX,MagY,MagZ,NetField,TimeStamp";
-    private static final String CSV_FILE_NAME = "/magnetometerdata.csv";
+    private static final String CSV_FILE_NAME = "/magnetometerdata2.csv";
     FileWriter writer = null;
     private LocationManager locationManager;
     DateFormat dateFormat ;
@@ -77,6 +81,11 @@ public class MainActivity extends AppCompatActivity  {
         DECIMAL_FORMATTER = new DecimalFormat("#.000", symbols);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 //        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+//        Intent serviceIntent = new Intent(this, FileUploadService.class);
+//        startService(serviceIntent);
+        scheduleFileUploadService(this);
+
+
         Intent intent = new Intent(this, MagnetometerService.class);
         startService(intent);
 
@@ -95,6 +104,8 @@ public class MainActivity extends AppCompatActivity  {
             }
 
         });
+
+
 
 
 
@@ -123,6 +134,22 @@ public class MainActivity extends AppCompatActivity  {
         }
 
     }
+    private void scheduleFileUploadService(Context context) {
+        Intent intent = new Intent(context, FileUploadService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(
+                context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+
+        // Get the AlarmManager service
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+        // Set the repeating alarm to trigger every 5 minutes
+        alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis(),
+                INTERVAL,
+                pendingIntent
+        );
+    }
 
     private void openFilePicker2() {
         String fileName = "/magnetometerdata.csv";
@@ -140,7 +167,13 @@ public class MainActivity extends AppCompatActivity  {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(uri, "text/csv");
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
         PackageManager packageManager = getPackageManager();
+
 
         // Verify that an app is available to handle the Intent
         if (intent.resolveActivity(getPackageManager()) != null) {
@@ -157,12 +190,15 @@ public class MainActivity extends AppCompatActivity  {
 //        permissionCheck();
 
                 // Define the URI for the CSV file
-                Uri csvFileUri = Uri.parse("content://com.bukhari.magnetometer/magnetometerdata.csv");
+                Uri csvFileUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", new File(Environment.getExternalStorageDirectory() + "/magnetometerdata.csv"));
+    System.out.println(csvFileUri+"uri"   );
 
         // Create an Intent to open the CSV file in another app
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setDataAndType(csvFileUri, "text/csv");
                 intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+
 
         // Launch the other app
                 startActivity(intent);

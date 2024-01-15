@@ -3,10 +3,7 @@
 <!--    <external-path name="lsdm" path="." />-->
 
         <external-path name="." path="." />
-<files-path
-    name="files"
-    path="magnetometer.csv"
-    />
+
 
         <files-path
         name="files"
