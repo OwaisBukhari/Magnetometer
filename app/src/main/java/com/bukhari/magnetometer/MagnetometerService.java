@@ -53,7 +53,7 @@ public class MagnetometerService extends Service implements SensorEventListener 
     private BufferedWriter writer = null;
     private double magX, magY, magZ, magnitude;
     private Timer timer;
-    private final long TIMER_INTERVAL = 5000; // 5 seconds interval
+    private final long TIMER_INTERVAL = 1*60*1000; // 5 seconds interval
 
     @Override
     public void onCreate() {
@@ -90,7 +90,7 @@ public class MagnetometerService extends Service implements SensorEventListener 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && intent.getAction() != null && intent.getAction().equals("STOP_SERVICE")) {
-            stopSelf();
+//            stopSelf();
             return START_NOT_STICKY;
         }
 
@@ -212,16 +212,28 @@ public class MagnetometerService extends Service implements SensorEventListener 
                     new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.US).format(new Date());
 
             try {
-                if (writer != null) {
+                if ((writer != null) && (getFile().exists())) {
                     writer.write(csvRow);
                     writer.newLine();
                     writer.flush();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+                }else
+                {
+                    writer = new BufferedWriter(new FileWriter(getFile(), true));
+                    writer.write(CSV_HEADER);
+                    writer.write(csvRow);
+
+                    writer.newLine();
+                    writer.flush();}
+
+
+
+                } catch (IOException e) {
+                throw new RuntimeException(e);
             }
+
         }
-    }
+        }
+
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

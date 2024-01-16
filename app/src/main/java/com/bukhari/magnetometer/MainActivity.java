@@ -48,7 +48,7 @@ import java.util.Date;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity  {
-    private static final int INTERVAL = 1 * 60 * 1000; // 5 minutes in milliseconds
+    private static final int INTERVAL = 2* 60 * 1000; // 5 minutes in milliseconds
 
     private TextView value;
     private SensorManager sensorManager;
@@ -128,6 +128,7 @@ public class MainActivity extends AppCompatActivity  {
             }
             try {
                 writer.append('\n');
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -152,7 +153,7 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     private void openFilePicker2() {
-        String fileName = "/magnetometerdata.csv";
+        String fileName = "/magnetometerdata2.csv";
 ////        System.out.println(Environment.getExternalStorageDirectory());
         String filePath = Environment.getExternalStorageDirectory() + fileName;
 ////        System.out.println("filePath: " + filePath);
@@ -190,7 +191,7 @@ public class MainActivity extends AppCompatActivity  {
 //        permissionCheck();
 
                 // Define the URI for the CSV file
-                Uri csvFileUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", new File(Environment.getExternalStorageDirectory() + "/magnetometerdata.csv"));
+                Uri csvFileUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", new File(Environment.getExternalStorageDirectory() + "/magnetometerdata2.csv"));
     System.out.println(csvFileUri+"uri"   );
 
         // Create an Intent to open the CSV file in another app

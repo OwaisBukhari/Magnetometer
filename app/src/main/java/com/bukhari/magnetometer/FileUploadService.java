@@ -31,7 +31,7 @@ public class FileUploadService extends IntentService {
             if (uploadFileToServer()) {
                 // If the upload is successful, delete the file and create a new empty file
                 deleteFile();
-                createEmptyFile();
+//                createEmptyFile();
             }
         } else {
             Log.d(TAG, "File does not exist. Skipping upload.");
@@ -60,7 +60,7 @@ public class FileUploadService extends IntentService {
 
     private boolean uploadFileToServer() {
         try {
-            stopService(new Intent(this, MagnetometerService.class));
+//            stopService(new Intent(this, MagnetometerService.class));
 
 
             File fileToUpload = new File(Environment.getExternalStorageDirectory(), "magnetometerdata2.csv");

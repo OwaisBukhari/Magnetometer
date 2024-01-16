@@ -21,7 +21,7 @@ public class FileUploadScheduler extends BroadcastReceiver {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(context, FileUploadScheduler.class), 0);
 
-        long intervalMillis = 20 * 1000; // 10 minutes in milliseconds
+        long intervalMillis = 200 * 1000; // 10 minutes in milliseconds
         long currentTime = System.currentTimeMillis();
 
         // Schedule the next run after 10 minutes from the current time
