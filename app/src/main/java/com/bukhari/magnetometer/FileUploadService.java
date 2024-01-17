@@ -19,6 +19,7 @@ import java.io.IOException;
 public class FileUploadService extends IntentService {
 
     private static final String TAG = "FileUploadService";
+//    private static final String SERVER_URL = "http://10.57.186.86/Magneto/upload.php"; // Replace with your server URL
     private static final String SERVER_URL = "http://104.248.224.140/magnetometer/upload.php"; // Replace with your server URL
 
     public FileUploadService() {

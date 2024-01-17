@@ -42,7 +42,8 @@ public class MagnetometerService extends Service implements SensorEventListener 
     private static final String TAG = "MagnetometerService";
     private static final long INTERVAL = 1000; // update interval in milliseconds
     private static final String CSV_FILE_NAME = "/magnetometerdata2.csv";
-    private static final String CSV_HEADER = "Latitude,Longitude,Altitude,MagX,MagY,MagZ,NetField,TimeStamp";
+    private static String userid ;
+    private static final String CSV_HEADER = "UserID,Latitude,Longitude,Altitude,MagX,MagY,MagZ,NetField,TimeStamp";
     private static final String CHANNEL_ID = "ForegroundServiceforMagnetometer";
 
     private SensorManager sensorManager;
@@ -62,6 +63,8 @@ public class MagnetometerService extends Service implements SensorEventListener 
         sensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         createNotificationChannel();
+
+
 
         // initialize writer when the service is created
         try {
@@ -87,12 +90,17 @@ public class MagnetometerService extends Service implements SensorEventListener 
         return new File(Environment.getExternalStorageDirectory() + CSV_FILE_NAME);
     }
 
+
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && intent.getAction() != null && intent.getAction().equals("STOP_SERVICE")) {
-//            stopSelf();
+            stopSelf();
             return START_NOT_STICKY;
         }
+         userid =intent.getStringExtra("userid");
+        System.out.println("userid in service"+userid);
+
 
         Intent serviceIntent = new Intent(this, FileUploadService.class);
         serviceIntent.setAction("STOP_SERVICE");
@@ -202,7 +210,8 @@ public class MagnetometerService extends Service implements SensorEventListener 
     private void writeDataToCSV() {
         // write values to CSV file
         if (location != null) {
-            String csvRow = location.getLongitude() + "," +
+            String csvRow = userid+","+
+                    location.getLongitude() + "," +
                     location.getLatitude() + "," +
                     location.getAltitude() + "," +
                     decimalFormatter.format(magX) + "," +
@@ -220,6 +229,7 @@ public class MagnetometerService extends Service implements SensorEventListener 
                 {
                     writer = new BufferedWriter(new FileWriter(getFile(), true));
                     writer.write(CSV_HEADER);
+                    writer.newLine();
                     writer.write(csvRow);
 
                     writer.newLine();

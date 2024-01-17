@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity  {
     private TextView value;
     private SensorManager sensorManager;
     public static DecimalFormat DECIMAL_FORMATTER;
-    private static final String CSV_HEADER = "Latitude,Longitude,Altitude,MagX,MagY,MagZ,NetField,TimeStamp";
+    private static final String CSV_HEADER = "UserID,Latitude,Longitude,Altitude,MagX,MagY,MagZ,NetField,TimeStamp";
     private static final String CSV_FILE_NAME = "/magnetometerdata2.csv";
     FileWriter writer = null;
     private LocationManager locationManager;
@@ -66,6 +66,12 @@ public class MainActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         value = (TextView) findViewById(R.id.value);
+        Intent intentuserid=getIntent();
+//        System.out.println(intentuserid.getIntExtra("")+"mainactivy mae agya userid");
+        String userId=intentuserid.getStringExtra("userid");
+        System.out.println(userId+"mainactivy mae agya userid");
+
+
 
         // define decimal formatter
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
@@ -87,6 +93,8 @@ public class MainActivity extends AppCompatActivity  {
 
 
         Intent intent = new Intent(this, MagnetometerService.class);
+
+        intent.putExtra("userid",userId);
         startService(intent);
 
         final Button button = (Button) findViewById(R.id.button);
