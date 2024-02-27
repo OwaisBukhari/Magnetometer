@@ -2,8 +2,11 @@ package com.bukhari.magnetometer;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
+
+import androidx.core.content.FileProvider;
 
 import okhttp3.Headers;
 import okhttp3.MediaType;
@@ -17,10 +20,17 @@ import java.io.File;
 import java.io.IOException;
 
 public class FileUploadService extends IntentService {
+    File fileToDelete;
+
+  String filepath;
 
     private static final String TAG = "FileUploadService";
 //    private static final String SERVER_URL = "http://10.57.186.86/Magneto/upload.php"; // Replace with your server URL
     private static final String SERVER_URL = "http://104.248.224.140/magnetometer/upload.php"; // Replace with your server URL
+    private String filePath;
+    private String filePath2;
+    private String fileToUploadir;
+
 
     public FileUploadService() {
         super("FileUploadService");
@@ -40,13 +50,37 @@ public class FileUploadService extends IntentService {
     }
 
     private boolean fileExists() {
-        String fileToUpload = Environment.getExternalStorageDirectory() + "/magnetometerdata2.csv";
-        return new File(fileToUpload).exists();
+        if (android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.Q) {
+
+             fileToUploadir = Environment.getExternalStorageDirectory() + "/magnetometerdata2.csv";
+
+        }else {
+
+             fileToUploadir = getExternalFilesDir(null) + "/magnetometerdata2.csv";
+
+        }
+        return new File(fileToUploadir).exists();
     }
 
     private void deleteFile() {
-        String filePath = Environment.getExternalStorageDirectory() + "/magnetometerdata2.csv";
-        File fileToDelete = new File(filePath);
+
+
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+
+
+            filePath2 = Environment.getExternalStorageDirectory() + "/magnetometerdata2.csv";
+            
+            fileToDelete = new File(filePath2);
+
+
+        }else {
+
+            filePath2 = getExternalFilesDir(null) + "/magnetometerdata2.csv";
+
+            fileToDelete = new File(filePath2);
+        }
+//        String filePath = Environment.getExternalStorageDirectory() + "/magnetometerdata2.csv";
 
         if (fileToDelete.exists()) {
             if (fileToDelete.delete()) {
@@ -63,8 +97,18 @@ public class FileUploadService extends IntentService {
         try {
 //            stopService(new Intent(this, MagnetometerService.class));
 
+            if (android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.Q) {
 
-            File fileToUpload = new File(Environment.getExternalStorageDirectory(), "magnetometerdata2.csv");
+                fileToUploadir = Environment.getExternalStorageDirectory() + "/magnetometerdata2.csv";
+
+            }else {
+
+                fileToUploadir = getExternalFilesDir(null) + "/magnetometerdata2.csv";
+
+            }
+
+
+            File fileToUpload = new File(fileToUploadir);
             OkHttpClient client = new OkHttpClient();
 
             RequestBody requestBody = new MultipartBody.Builder()
@@ -104,6 +148,8 @@ public class FileUploadService extends IntentService {
     }
 
     private void createEmptyFile() {
+
+
         String filePath = Environment.getExternalStorageDirectory() + "/magnetometerdata2.csv";
         File emptyFile = new File(filePath);
 

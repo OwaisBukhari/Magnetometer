@@ -1,16 +1,36 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+
     <!-- Base application theme. -->
     <style name="Theme.Magnetometer" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/purple_200</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
         <item name="colorOnPrimary">@color/black</item>
+
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_200</item>
         <item name="colorOnSecondary">@color/black</item>
+
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+
+        <!-- Customize your action bar here. -->
+        <item name="android:actionBarStyle">@style/MyActionBar</item>
+
+        <!-- Change the color of the app name (textColorPrimary) to blue -->
+        <item name="android:textColorPrimary">@android:color/holo_blue_light</item>
     </style>
+
+    <!-- Style for customizing the action bar -->
+    <style name="MyActionBar" parent="Widget.MaterialComponents.ActionBar.Solid">
+        <!-- Customize the action bar background color -->
+        <item name="background">@color/cardview_light_background</item>
+
+        <!-- Customize the action bar title text color -->
+        <item name="titleTextColor">@android:color/holo_blue_light</item>
+
+        <!-- Add any other action bar customizations here -->
+    </style>
+
 </resources>

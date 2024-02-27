@@ -4,7 +4,6 @@
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-
     android:background="#000000"
     tools:context="com.bukhari.magnetometer.MainActivity">
 
@@ -13,21 +12,34 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="Magnetometer Data Is Being Recorded ."
+        android:text="Magnetometer Data Is Being Recorded."
         android:textColor="#FFFFFF"
         android:textSize="23sp"
         android:textStyle="bold" />
 
     <Button
-        android:id="@+id/button"
-        android:layout_width="wrap_content"
+        android:id="@+id/buttonViewFile"
+        android:layout_width="237dp"
+        android:layout_height="66dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="89dp"
+        android:layout_marginEnd="85dp"
+        android:layout_marginBottom="133dp"
+        android:text="View File" />
+
+    <Button
+        android:id="@+id/buttonLogout"
+        android:layout_width="179dp"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginStart="154dp"
-        android:layout_marginEnd="150dp"
-        android:layout_marginBottom="133dp"
-        android:text="View File" />
+        android:layout_marginStart="118dp"
+        android:layout_marginEnd="114dp"
+        android:layout_marginBottom="77dp"
+        android:text="Logout"
+        android:textSize="7sp" />
 
 </RelativeLayout>

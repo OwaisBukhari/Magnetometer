@@ -20,6 +20,7 @@ import android.os.Environment;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
@@ -37,10 +38,13 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class MagnetometerService extends Service implements SensorEventListener {
     private static final String TAG = "MagnetometerService";
-    private static final long INTERVAL = 1000; // update interval in milliseconds
+//    private static final long INTERVAL = 1000; // update interval in milliseconds
     private static final String CSV_FILE_NAME = "/magnetometerdata2.csv";
     private static String userid ;
     private static final String CSV_HEADER = "UserID,Latitude,Longitude,Altitude,MagX,MagY,MagZ,NetField,TimeStamp";
@@ -54,8 +58,9 @@ public class MagnetometerService extends Service implements SensorEventListener 
     private BufferedWriter writer = null;
     private double magX, magY, magZ, magnitude;
     private Timer timer;
-    private final long TIMER_INTERVAL = 1*60*1000; // 5 seconds interval
+    private final long TIMER_INTERVAL = 1*10*1000; // 5 seconds interval
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     public void onCreate() {
         super.onCreate();
@@ -75,41 +80,60 @@ public class MagnetometerService extends Service implements SensorEventListener 
             e.printStackTrace();
         }
 
-        // Initialize the timer
-        timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
+        // Initialize the ScheduledExecutorService
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        executorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 // Your code to write data to CSV here
                 writeDataToCSV();
             }
-        }, 0, TIMER_INTERVAL);
+        }, 0, TIMER_INTERVAL, TimeUnit.MILLISECONDS);
+
+
+//        // Initialize the timer
+//        timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                // Your code to write data to CSV here
+//                writeDataToCSV();
+//            }
+//        }, 0, TIMER_INTERVAL);
     }
 
+
     private File getFile() {
-        return new File(Environment.getExternalStorageDirectory() + CSV_FILE_NAME);
-    }
+
+        if (android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.Q) {
+
+
+            return new File(Environment.getExternalStorageDirectory() + CSV_FILE_NAME);
+
+        }else {
+            return new File(getExternalFilesDir(null) + CSV_FILE_NAME);
+        }}
 
 
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && intent.getAction() != null && intent.getAction().equals("STOP_SERVICE")) {
-            stopSelf();
+//            stopSelf();
             return START_NOT_STICKY;
         }
          userid =intent.getStringExtra("userid");
         System.out.println("userid in service"+userid);
 
 
-        Intent serviceIntent = new Intent(this, FileUploadService.class);
-        serviceIntent.setAction("STOP_SERVICE");
-        PendingIntent pendingIntent = PendingIntent.getService(
-                this,
-                0,
-                serviceIntent,
-                PendingIntent.FLAG_IMMUTABLE
-        );
+////        Intent serviceIntent = new Intent(this, FileUploadService.class);
+////        serviceIntent.setAction("STOP_SERVICE");
+//        PendingIntent pendingIntent = PendingIntent.getService(
+//                this,
+//                0,
+//                serviceIntent,
+//                PendingIntent.FLAG_IMMUTABLE
+//        );
 
         Intent stopServiceIntent = new Intent(this, MagnetometerService.class);
         stopServiceIntent.setAction("STOP_SERVICE");
@@ -123,10 +147,27 @@ public class MagnetometerService extends Service implements SensorEventListener 
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Magnetometer Service")
-                .setContentText("Recording Magnetometer Data... Click to stop")
-                .setContentIntent(stopServicePendingIntent)
-                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setContentText("Recording Magnetometer Data...")
+
+                ///nitifcation k sath stop button de do ?//
+//                .addAction(R.drawable, "Stop", stopServicePendingIntent)
+
+
+
+
+
+//                .setContentIntent(stopServicePendingIntent)
+                .setSmallIcon(R.mipmap.magnetometericon)
                 .build();
+//        set pendig intent to open app
+//        Intent notificationIntent = new Intent(this, MainActivity.class);
+//        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+//                0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+//        notification.contentIntent = pendingIntent;
+
+
+
+
 
         // define decimal formatter
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
@@ -211,8 +252,8 @@ public class MagnetometerService extends Service implements SensorEventListener 
         // write values to CSV file
         if (location != null) {
             String csvRow = userid+","+
-                    location.getLongitude() + "," +
                     location.getLatitude() + "," +
+                    location.getLongitude() + "," +
                     location.getAltitude() + "," +
                     decimalFormatter.format(magX) + "," +
                     decimalFormatter.format(magY) + "," +

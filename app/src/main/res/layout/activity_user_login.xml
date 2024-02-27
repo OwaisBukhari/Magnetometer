@@ -1,50 +1,138 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#ADD8E6"
     tools:context=".UserLogin">
+
+    <ImageView
+        android:id="@+id/maglogo"
+        android:layout_width="wrap_content"
+        android:layout_height="187dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="93dp"
+        android:layout_marginTop="22dp"
+        android:layout_marginEnd="86dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/earthbgmag" />
 
     <EditText
         android:id="@+id/usernameEditText"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="45dp"
+        android:layout_marginTop="244dp"
+        android:layout_marginEnd="38dp"
         android:hint="Username"
-        android:padding="10dp" />
+        android:padding="10dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black" />
 
     <EditText
         android:id="@+id/emailEditText"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/usernameEditText"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="47dp"
         android:layout_marginTop="20dp"
+        android:layout_marginEnd="45dp"
         android:hint="Email"
-        android:padding="10dp" />
+        android:padding="10dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black" />
 
     <EditText
         android:id="@+id/passwordEditText"
-        android:layout_width="match_parent"
+        android:layout_width="322dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/emailEditText"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="46dp"
         android:layout_marginTop="20dp"
+        android:layout_marginEnd="43dp"
         android:hint="Password"
         android:inputType="textPassword"
-        android:padding="10dp" />
+        android:padding="10dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black" />
 
     <Button
         android:id="@+id/registerButton"
-        android:layout_width="match_parent"
+        android:layout_width="208dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/passwordEditText"
-        android:layout_marginTop="20dp"
-        android:text="Register" />
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="97dp"
+        android:layout_marginTop="25dp"
+        android:layout_marginEnd="88dp"
+        android:text="Register"
+        app:cornerRadius="10dp" />
 
     <Button
         android:id="@+id/loginButton"
-        android:layout_width="match_parent"
+        android:layout_width="204dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/registerButton"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="101dp"
         android:layout_marginTop="20dp"
-        android:text="Login" />
+        android:layout_marginEnd="88dp"
+        android:text="Login"
+        app:cornerRadius="10dp" />
+
+    <Button
+        android:id="@+id/forgotPasswordButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/loginButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:text="Forgot Password"
+        app:cornerRadius="10dp" />
+
+    <ImageView
+        android:id="@+id/neduet_logo"
+        android:layout_width="109dp"
+        android:layout_height="99dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="274dp"
+        android:layout_marginBottom="11dp"
+        android:background="@drawable/nedlogo" />
+
+    <ImageView
+        android:id="@+id/neduet_logo3"
+        android:layout_width="397dp"
+        android:layout_height="266dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="-10dp"
+        android:layout_marginBottom="-68dp"
+        android:background="@drawable/ncltransparentlogo" />
+
+    <TextView
+        android:layout_width="127dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="121dp"
+        android:layout_marginEnd="145dp"
+        android:layout_marginBottom="150dp"
+        android:text="Powered By"
+        android:textColor="#000000"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
 </RelativeLayout>

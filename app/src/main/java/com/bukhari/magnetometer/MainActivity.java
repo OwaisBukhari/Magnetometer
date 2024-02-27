@@ -1,5 +1,4 @@
 package com.bukhari.magnetometer;
-
 import static android.content.ContentValues.TAG;
 
 import android.Manifest;
@@ -12,6 +11,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -36,10 +36,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.content.PermissionChecker;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.SQLOutput;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -47,8 +49,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity  {
-    private static final int INTERVAL = 2* 60 * 1000; // 5 minutes in milliseconds
+public class MainActivity extends AppCompatActivity {
+    Uri csvFileUri;
+    String filePath;
+    private static final int INTERVAL = 30* 60 * 1000; // 5 minutes in milliseconds
 
     private TextView value;
     private SensorManager sensorManager;
@@ -57,74 +61,72 @@ public class MainActivity extends AppCompatActivity  {
     private static final String CSV_FILE_NAME = "/magnetometerdata2.csv";
     FileWriter writer = null;
     private LocationManager locationManager;
-    DateFormat dateFormat ;
-
-
+    DateFormat dateFormat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        value = (TextView) findViewById(R.id.value);
-        Intent intentuserid=getIntent();
-//        System.out.println(intentuserid.getIntExtra("")+"mainactivy mae agya userid");
-        String userId=intentuserid.getStringExtra("userid");
-        System.out.println(userId+"mainactivy mae agya userid");
-
-
+        value = findViewById(R.id.value);
+        Intent intentuserid = getIntent();
+        String userId = intentuserid.getStringExtra("userid");
+        System.out.println(userId + "mainactivy mae agya userid");
 
         // define decimal formatter
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
         symbols.setDecimalSeparator('.');
         permissionCheck();
-//        ActivityCompat.requestPermissions(this,
-//                new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION},
-//                1);
-//        ActivityCompat.requestPermissions((Activity) getApplicationContext(), new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION  }, 1);
-
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
 
         DECIMAL_FORMATTER = new DecimalFormat("#.000", symbols);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-//        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-//        Intent serviceIntent = new Intent(this, FileUploadService.class);
-//        startService(serviceIntent);
         scheduleFileUploadService(this);
 
-
         Intent intent = new Intent(this, MagnetometerService.class);
-
-        intent.putExtra("userid",userId);
+        intent.putExtra("userid", userId);
         startService(intent);
 
-        final Button button = (Button) findViewById(R.id.button);
+        final Button button = findViewById(R.id.buttonViewFile);
+        final Button buttonLogout = findViewById(R.id.buttonLogout);
+
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     openFilePicker();
-                }else {
-
+                } else {
                     openFilePicker2();
                 }
-//
-
             }
-
         });
 
-
-
-
-
-
-
-
-
-
+        buttonLogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                logout();
+            }
+        });
 
         try {
-            writer = new FileWriter(Environment.getExternalStorageDirectory() + CSV_FILE_NAME, true);
+            System.out.println(Environment.getExternalStorageDirectory());
+            System.out.println(Environment.getRootDirectory());
+
+//                writer = new FileWriter(Environment.getExternalStorageDirectory() +CSV_FILE_NAME, true);
+
+            if (android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.Q) {
+
+
+                writer = new FileWriter(Environment.getExternalStorageDirectory() +CSV_FILE_NAME, true);
+
+
+
+            }else {
+                writer = new FileWriter(getExternalFilesDir(null) +CSV_FILE_NAME, true);
+            }
+
+
+//                System.out.println(getExternalFilesDir(null)+"file ban gaayi");
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -136,22 +138,35 @@ public class MainActivity extends AppCompatActivity  {
             }
             try {
                 writer.append('\n');
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void logout() {
+
+            // Delete the user session
+            SharedPreferences preferences = getSharedPreferences("user_session", MODE_PRIVATE);
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.clear();
+            editor.apply();
+
+            // Navigate to the UserLogin screen
+            Intent intent = new Intent(MainActivity.this, UserLogin.class);
+            startActivity(intent);
+            finish();  // Finish the current activity to prevent going back to the main activity
+
 
     }
+
     private void scheduleFileUploadService(Context context) {
         Intent intent = new Intent(context, FileUploadService.class);
         PendingIntent pendingIntent = PendingIntent.getService(
                 context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
-        // Get the AlarmManager service
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
-        // Set the repeating alarm to trigger every 5 minutes
         alarmManager.setRepeating(
                 AlarmManager.RTC_WAKEUP,
                 System.currentTimeMillis(),
@@ -162,17 +177,18 @@ public class MainActivity extends AppCompatActivity  {
 
     private void openFilePicker2() {
         String fileName = "/magnetometerdata2.csv";
-////        System.out.println(Environment.getExternalStorageDirectory());
-        String filePath = Environment.getExternalStorageDirectory() + fileName;
-////        System.out.println("filePath: " + filePath);
-//
-//        // Get the content:// URI using the Storage Access Framework
-//        Uri uri = Uri.parse(filePath);
+        if (android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.Q) {
 
-//        File file = new File(Environment.getExternalStorageDirectory(),fileName);
+
+//            return new File(Environment.getExternalStorageDirectory() + CSV_FILE_NAME);
+         filePath = Environment.getExternalStorageDirectory() + fileName;
+
+        }else {
+             filePath = getExternalFilesDir(null) + fileName;
+
+        }
         Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", new File(filePath));
-//
-        // Create an Intent to open the file
+
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(uri, "text/csv");
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -183,61 +199,58 @@ public class MainActivity extends AppCompatActivity  {
 
         PackageManager packageManager = getPackageManager();
 
-
-        // Verify that an app is available to handle the Intent
         if (intent.resolveActivity(getPackageManager()) != null) {
-            // Start the activity to open the file
             startActivity(intent);
         } else {
-            // If no app is available to handle the Intent, display an error message
             Toast.makeText(this, "No app available to open CSV file", Toast.LENGTH_SHORT).show();
         }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     private void openFilePicker() {
-//        permissionCheck();
+        if (android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.Q) {
 
-                // Define the URI for the CSV file
-                Uri csvFileUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", new File(Environment.getExternalStorageDirectory() + "/magnetometerdata2.csv"));
-    System.out.println(csvFileUri+"uri"   );
+            csvFileUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", new File(Environment.getExternalStorageDirectory() + "/magnetometerdata2.csv"));
 
-        // Create an Intent to open the CSV file in another app
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setDataAndType(csvFileUri, "text/csv");
-                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//            return new File(Environment.getExternalStorageDirectory() + CSV_FILE_NAME);
+//            filePath = Environment.getExternalStorageDirectory() + fileName;
 
+        }else {
+             csvFileUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", new File(getExternalFilesDir(null) + "/magnetometerdata2.csv"));
+//            filePath = getExternalFilesDir(null) + fileName;
 
-
-        // Launch the other app
-                startActivity(intent);
+        }
 
 
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(csvFileUri, "text/csv");
+        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        startActivity(intent);
     }
 
-
-//    @RequiresApi(api = Build.VERSION_CODES.Q)
     private void permissionCheck() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (!Environment.isExternalStorageManager()) {
-
                 Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                 Uri uri = Uri.fromParts("package", getPackageName(), null);
                 intent.setData(uri);
                 startActivity(intent);
-
-
             }
-            ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
 
+            // Check if location is enabled
+            if (!isLocationEnabled()) {
+                // If not enabled, prompt the user to enable it
+                buildAlertMessageNoGps();
+            }
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Log.i(TAG,"bg_loc_check");
-            ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+            Log.i(TAG, "bg_loc_check");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 2);
 
 
             if ((checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
-                // You can use the API that requires the permission.
                 if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
                     new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Background Location Access")
@@ -249,156 +262,62 @@ public class MainActivity extends AppCompatActivity  {
                                     Uri uri = Uri.fromParts("package", getPackageName(), null);
                                     intent.setData(uri);
                                     startActivity(intent);
-                                       /* handler = new Handler();
-                                        handler.postDelayed(new Runnable() {
-                                            public void run() {
-                                                c();
-                                            }
-                                        }, 5000);*/
                                 }
                             })
                             .setNegativeButton("No", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialogInterface, int i) {
                                     Toast.makeText(MainActivity.this, "Denied", Toast.LENGTH_SHORT).show();
-//                                    c();
                                 }
                             })
                             .show();
                 }
                 new AlertDialog.Builder(MainActivity.this).create().hide();
-
             }
-
         }
     }
 
 
+    private boolean isLocationEnabled() {
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return locationManager.isLocationEnabled();
+        }
+        return false;
+    }
 
 
+    private void buildAlertMessageNoGps() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        dialog.cancel();
 
-//    @Override
-//    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
-//        super.onActivityResult(requestCode, resultCode, resultData);
-//        if (requestCode == 42 && resultCode == Activity.RESULT_OK) {
-//            // Get the URI of the selected file
-//            Uri uri = resultData.getData();
-//
-//            // Create an Intent to open the file
-//            Intent intent = new Intent(Intent.ACTION_VIEW);
-//            intent.setDataAndType(uri, "text/csv");
-//            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-//
-//            // Verify that an app is available to handle the Intent
-//            if (intent.resolveActivity(getPackageManager()) != null) {
-//                // Start the activity to open the file
-//                startActivity(intent);
-//            } else {
-//                // If no app is available to handle the Intent, display an error message
-//                Toast.makeText(this, "No app available to open CSV file", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
-
+                        // If the user clicks "No", keep prompting until they enable location services
+                        if (!isLocationEnabled()) {
+                            buildAlertMessageNoGps();
+                        }
+                    }
+                });
+        final AlertDialog alert = builder.create();
+        alert.show();
+    }
 
 
-
-
-//    @Override
+    @Override
     protected void onResume() {
         super.onResume();
-
-//        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION, Manifest.permission.MANAGE_EXTERNAL_STORAGE  }, 1);
-//        sensorManager.registerListener(this,
-////                sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
-////                SensorManager.SENSOR_DELAY_NORMAL);
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//
-//            System.out.println("55555454454554455454554");
-//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
-//            System.out.println(Man+"--------");
-//
-//            //    ActivityCompat#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for ActivityCompat#requestPermissions for more details.
-//            return;
-//        }
-
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-//        sensorManager.unregisterListener(this);
     }
-
-//    @Override
-//    public void onSensorChanged(SensorEvent event) {
-//        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-//            // get values for each axes X,Y,Z
-//            float magX = event.values[0];
-//            float magY = event.values[1];
-//            float magZ = event.values[2];
-//            double magnitude = Math.sqrt((magX * magX) + (magY * magY) + (magZ * magZ));
-//
-//
-////
-//
-//
-//
-//            // get GPS location
-//            long timestamp = System.currentTimeMillis();
-//            SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
-//            String dateString = dateFormat.format(new Date());
-//            System.out.println(dateString);
-//
-//
-////            String dateString = dateFormat.format(new Date(timestamp));
-//
-//
-//
-//
-//            // set value on the screen
-////            value.setText(DECIMAL_FORMATTER.format(magnitude) + " \u00B5Tesla");
-//            // create csv file and write values to it
-//            String csvRow = DECIMAL_FORMATTER.format(magX) + "," +
-//                    DECIMAL_FORMATTER.format(magY) + "," +
-//                    DECIMAL_FORMATTER.format(magZ) + "," +
-//                    (dateString) + "," +
-//                    DECIMAL_FORMATTER.format(magnitude);
-////                    location.getLatitude() + "," +
-////                    location.getLongitude();
-//
-////            FileWriter writer = null;
-//            try {
-////                writer = new FileWriter(Environment.getExternalStorageDirectory()+CSV_FILE_NAME, true);
-////                if(writer!=null){
-////                    writer.append(CSV_HEADER);
-////                    writer.append('\n');
-////                }
-//                writer.append(csvRow);
-//                writer.append('\n');
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            } finally {
-////                try {
-//////                    writer.flush();
-//////                    writer.close();
-//////                } catch (IOException e) {
-//////                    e.printStackTrace();
-//////                }
-//            }
-//        }
-//
-//    }
-
-//    @Override
-//    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-//    }
-
-
 }
